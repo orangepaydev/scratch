@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Version 0.2 Dtd 15-May-2012-->
+<xs:schema 
+	xmlns="urn:iso:std:iso:20022:tech:xsd:ctrl.001.001.01" 
+	xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+	targetNamespace="urn:iso:std:iso:20022:tech:xsd:ctrl.001.001.01" 
+	elementFormDefault="qualified">
+	
+	<xs:element name="Document" type="Document"/> 
+	
+	<xs:complexType name="Document">
+		<xs:sequence>
+			<xs:element name="CtrlFile" type="CtrlFile"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="CtrlFile">
+		<xs:sequence>
+			<xs:element name="GrpHdr" type="GrpHdr"/>
+			<xs:element name="CtrlFileInf" type="CtrlFileInf"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="GrpHdr">
+		<xs:sequence>
+			<xs:element name="MsgId" type="Max35Text"/>
+			<xs:element name="CreDtTm" type="ISODateTime"/>
+			<xs:element name="NbOfFiles" type="Max15NumericText"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="CtrlFileInf">
+		<xs:sequence>
+			<xs:element maxOccurs="unbounded" minOccurs="0" name="FileInf" type="FileInf"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="FileInf">
+		<xs:sequence>
+			<xs:element name="FileNm" type="Max35Text"/>
+			<xs:element name="CheckSum" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:simpleType name="ISODateTime">
+  	<xs:restriction base="xs:dateTime"/>
+  </xs:simpleType>
+  
+  <xs:simpleType name="Max35Text">
+		<xs:restriction base="xs:string">
+			<xs:minLength value="1"/>
+			<xs:maxLength value="35"/>
+		</xs:restriction>
+	</xs:simpleType> 
+	
+	<xs:simpleType name="Max15NumericText">
+    <xs:restriction base="xs:string">
+        <xs:pattern value="[0-9]{1,15}"/>
+    </xs:restriction>
+	</xs:simpleType>
+	
+</xs:schema>

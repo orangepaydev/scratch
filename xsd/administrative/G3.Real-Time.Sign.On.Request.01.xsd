@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Version 0.2 Dtd 9-Oct-2012-->
+<xs:schema
+    targetNamespace="urn:bcsis"
+	elementFormDefault="qualified" 
+	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:head="urn:iso:std:iso:20022:tech:xsd:head.001.001.01"
+	xmlns:sr="urn:iso:std:iso:20022:tech:xsd:admn.001.001.01"
+	xmlns="urn:bcsis">
+	
+	<xs:import schemaLocation="head.001.001.01.xsd" namespace="urn:iso:std:iso:20022:tech:xsd:head.001.001.01"></xs:import>
+	<xs:import schemaLocation="admn.001.001.01.xsd" namespace="urn:iso:std:iso:20022:tech:xsd:admn.001.001.01"></xs:import>
+	
+	<xs:complexType name="MessageType">
+		<xs:sequence>
+			<xs:element name="AppHdr" type="head:BusinessApplicationHeaderV01"></xs:element>
+			<xs:element name="SignOnRequest" type="sr:Document"></xs:element>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:element name="Message" type="MessageType"></xs:element>
+	
+</xs:schema>

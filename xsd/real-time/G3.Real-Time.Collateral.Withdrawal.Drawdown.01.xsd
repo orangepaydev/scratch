@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Version 0.1 Dtd 30-May-2013-->
+<xs:schema targetNamespace="urn:bcsis"
+	elementFormDefault="qualified" 
+	xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+	xmlns:head="urn:iso:std:iso:20022:tech:xsd:head.001.001.01" 
+	xmlns:wd="urn:iso:std:iso:20022:tech:xsd:pacs.009.001.02"
+	xmlns="urn:bcsis">
+	<xs:import schemaLocation="pacs.009.001.02.xsd"
+		namespace="urn:iso:std:iso:20022:tech:xsd:pacs.009.001.02">
+	</xs:import>
+	<xs:import schemaLocation="head.001.001.01.xsd" 
+		namespace="urn:iso:std:iso:20022:tech:xsd:head.001.001.01">
+	</xs:import>
+
+	<xs:complexType name="MessageType">
+		<xs:sequence>
+			<xs:element name="AppHdr" type="head:BusinessApplicationHeaderV01"></xs:element>
+			<xs:element name="CollateralWithdrawalDrawDown" type="wd:Document"></xs:element>
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:element name="Message" type="MessageType"></xs:element>
+</xs:schema>

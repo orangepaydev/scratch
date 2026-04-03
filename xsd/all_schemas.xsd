@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+
+    <xs:import namespace="urn:iso:std:iso:20022:tech:xsd:admn.001.001.01"
+            schemaLocation="administrative/admn.001.001.01.xsd"/>
+    <xs:import namespace="urn:iso:std:iso:20022:tech:xsd:admn.002.001.01"
+            schemaLocation="administrative/admn.002.001.01.xsd"/>
+    <xs:import namespace="urn:iso:std:iso:20022:tech:xsd:head.001.001.01"
+            schemaLocation="administrative/head.001.001.01.xsd"/>
+    <xs:import namespace="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.02"
+            schemaLocation="real-time/pacs.008.001.02.xsd"/>
+    <xs:import namespace="urn:iso:std:iso:20022:tech:xsd:pacs.002.001.03"
+            schemaLocation="real-time/pacs.002.001.03.xsd"/>
+    <xs:import namespace="urn:bcsis"
+            schemaLocation="administrative/G3.Real-Time.Sign.On.Request.01.xsd"/>
+</xs:schema>
