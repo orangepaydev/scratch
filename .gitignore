@@ -41,6 +41,7 @@ bin/
 
 ### VS Code ###
 .vscode/
+license_pki/private/
 
 ### Mac OS ###
 .DS_Store
