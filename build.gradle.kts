@@ -25,6 +25,8 @@ dependencies {
     implementation(group = "org.bouncycastle", name = "bcpkix-jdk18on", version = "1.76") // PEM / PKIX / CMS
     implementation(group = "org.bouncycastle", name = "bcpg-jdk18on",   version = "1.76") // OpenPGP
     implementation("orangepay.core:lib-bpmn-v3:1.1.13") { isTransitive = false }
+    // Source: https://mvnrepository.com/artifact/com.bettercloud/vault-java-driver
+    implementation("com.bettercloud:vault-java-driver:5.1.0")
 }
 
 tasks.test {
