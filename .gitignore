@@ -48,3 +48,5 @@ license_pki/private/
 
 # ignore any node modules in the project
 node_modules/
+
+.env
