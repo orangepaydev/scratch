@@ -139,7 +139,7 @@ class InitVault(val vault: Vault) {
             "format" to "pem",
             "key_type" to "ec",
             "key_bits" to 256, // prime256v1 / P-256
-            "ttl" to "8760h" // 1 year
+            "ttl" to "17520h", // 2 year
         )
 
         val certResponse = vault.logical()
@@ -161,56 +161,14 @@ class InitVault(val vault: Vault) {
         // store the public and private key in the secret engine for later retrieval, in a real app you would want to store these securely and not print them out
         val storeSecretResponse = vault.logical().write(
             "kv-v1/$certSerialNumber", mapOf(
-                "data" to mapOf(
-                    "private_key" to privateKeyPem,
-                    "certificate" to certPem
-                )
+                "private_key" to privateKeyPem,
+                "certificate" to certPem
             )
         )
 
-        println (storeSecretResponse.restResponse.body.toString(Charsets.UTF_8))
+        println(storeSecretResponse.restResponse.body.toString(Charsets.UTF_8))
 
-        uploadTransient("my-app-9", privateKeyPem, certPem)
-    }
-
-    fun listCertificates(pkiPath: String) {
-        val response = vault.logical().list("$pkiPath/certs")
-        val serialNumbers = response.listData
-
-        if (serialNumbers.isEmpty()) {
-            println("No certificates found in $pkiPath.")
-            return
-        }
-
-        println("Found ${serialNumbers.size} certificates:")
-        val cf = CertificateFactory.getInstance("X.509")
-        val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss 'UTC'")
-
-        serialNumbers.forEach { serial ->
-            try {
-                val certData = vault.logical().read("$pkiPath/cert/$serial")
-                val certPem = certData.data["certificate"] as? String
-                if (certPem != null) {
-                    val x509 = cf.generateCertificate(
-                        ByteArrayInputStream(certPem.toByteArray(Charsets.UTF_8))
-                    ) as X509Certificate
-                    val cn = x509.subjectX500Principal.name
-                        .split(",")
-                        .firstOrNull { it.trimStart().startsWith("CN=") }
-                        ?.substringAfter("CN=")
-                        ?: "(unknown)"
-                    val notBefore = x509.notBefore.toInstant().atZone(ZoneId.of("UTC")).format(fmt)
-                    val notAfter  = x509.notAfter.toInstant().atZone(ZoneId.of("UTC")).format(fmt)
-                    println("- Serial : $serial")
-                    println("  CN     : $cn")
-                    println("  Valid  : $notBefore  ->  $notAfter")
-                } else {
-                    println("- $serial  (certificate PEM not available)")
-                }
-            } catch (e: Exception) {
-                println("- $serial  (failed to parse: ${e.message})")
-            }
-        }
+        uploadTransient(appName, privateKeyPem, certPem)
     }
 
     private fun pemToDer(pem: String, beginMarker: String, endMarker: String): ByteArray {
@@ -307,14 +265,17 @@ class InitVault(val vault: Vault) {
 fun main() {
     InitVault(createVaultClient()).apply {
         // crate the root CA
-//        createCA("my-root-ca")
-//        println(fetchIssuerId("pki", "my-root-ca"))
-//
-//        // create the intermediate CA signed by the root CA
-//        createCAInner("pki", "my-root-ca", "my-intermediate-ca")
-//        println(fetchIssuerId("pki_int", "my-intermediate-ca"))
+        // will need to be generated once every 8 years, though the rootCA validity is 10 years
+        // createCA("rootCA20260426")
+        // println(fetchIssuerId("pki", "rootCA20260426"))
 
-        // issueAppCert("pki_int", "my-intermediate-ca", "server-role", "my-app-8")
-        listCertificates("pki_int")
+        // create the intermediate CA signed by the root CA
+        // will need to be generated once every 3 years, though the intermediateCA validity is 5 years
+        // createCAInner("pki", "rootCA20260426", "intermediateCA20260426")
+        // println(fetchIssuerId("pki_int", "intermediateCA20260426"))
+
+        // these are the application certificates that will be used by the app, they will need to be generated every once every year, though the app cert validity is 2 years
+        // issueAppCert("pki_int", "intermediateCA20260426", "server-role", "app-workflow-v5.V5.20260427")
+        // issueAppCert("pki_int", "intermediateCA20260426", "server-role", "portal-license-v1.V1.20260427")
     }
 }

@@ -11,14 +11,22 @@ import java.io.StringWriter
 import java.security.*
 import java.security.spec.ECGenParameterSpec
 
-fun createVaultClient(): Vault {
+fun createVaultClient() = createVaultClient(
+    roleId = "bab45543-0a9c-c59b-b369-ebdfa728da1c",
+    secretId = "f5db37c4-11b5-620f-b84d-ce5d2f289f5d"
+)
+
+fun createVaultPortalClient() = createVaultClient(
+    roleId = "8c2243f2-66c3-9a18-365f-ccb59d5570db",
+    secretId = "1bc565f9-9c53-afda-c8d4-a98442f1f4f5"
+)
+
+fun createVaultClient(roleId: String, secretId: String): Vault {
     val config = VaultConfig()
         .address("http://127.0.0.1:8200") // Your Vault Address
         .engineVersion(1)
         .build()
 
-    val roleId = "bab45543-0a9c-c59b-b369-ebdfa728da1c"
-    val secretId = "f5db37c4-11b5-620f-b84d-ce5d2f289f5d"
 
     val vaultAuth = Vault(config)
 
@@ -139,6 +147,7 @@ fun generateServer(vault: Vault) {
     println(appResult.data["certificate"])
 
 }
+
 // Helpers for local ECC and CSR generation
 fun generateECCKeyPair(): KeyPair {
     val g = KeyPairGenerator.getInstance("EC")
@@ -173,22 +182,24 @@ fun debug2(vault: Vault) {
 
 fun fetchExistingCert(vault: Vault) {
 // Fetch from pki_int/issue/server-role or pki_int/cert/xxx
-    val response = vault.logical().write("pki_int/issue/server-role", mapOf(
-        "common_name" to "MyApplication"
-    ))
+    val response = vault.logical().write(
+        "pki_int/issue/server-role", mapOf(
+            "common_name" to "MyApplication"
+        )
+    )
 
     val certificatePem = response.data["certificate"] // The public cert
     val privateKeyPem = response.data["private_key"]   // The private key
 
-    println ("Certificate:\n$certificatePem")
-    println ("Private Key:\n$privateKeyPem")
+    println("Certificate:\n$certificatePem")
+    println("Private Key:\n$privateKeyPem")
 
     val certService = LocalPublicCertService(certificatePem!!)
     val pkService = LocalPrivateKeyService(privateKeyPem!!)
 
     val message = "Hello Vault"
     val verificationResult = certService.verifySignature(message, pkService.signPayload(message))
-    println ("Signature Verification Result: $verificationResult")
+    println("Signature Verification Result: $verificationResult")
 
     certService.encryptMessage(message).also { encrypted ->
         println("Encrypted Message: $encrypted")

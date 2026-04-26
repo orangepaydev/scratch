@@ -68,10 +68,15 @@ class LocalPrivateKeyService(privateKeyPem: String) {
     }
 
     companion object {
-        init {
+
+        fun performBCInit() {
             if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
                 Security.addProvider(BouncyCastleProvider())
             }
+        }
+
+        init {
+            performBCInit()
         }
     }
 }

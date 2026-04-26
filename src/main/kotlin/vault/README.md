@@ -5,14 +5,16 @@ about the types of keys, their purposes, and how they are managed within the app
 
 ## Key and Cert details and storage
 
-| Key/Certificate Type        | Purpose                                        | Used By                             | Store Path                                                                   |
-|-----------------------------|------------------------------------------------|-------------------------------------|------------------------------------------------------------------------------|
-| CA Certificate              | Used establish trust                           | [Engine]Validate the Cert chain     | [Vault]pki/rootCA${YYYYMMDD} <br> [SSM]/app-workflow-v5/license/CACert       |
-| CA Private Key              | Used to sign certificates                      | [Vault]Sign the intermediate CSR    | [Vault]pki/rootCA${YYYYMMDD}                                                 |
-| Intermediate CA Certificate | Used to establish trust for intermediate CAs   | [Engine]Validate the Cert chain     | [Vault]pki_int/intermediateCA${YYYYMMDD}                                     |
-| Intermediate CA Private Key | Used to sign certificates for intermediate CAs | [Vault]Sign the Server CSR          | [Vault]pki_int/intermediateCA${YYYYMMDD}                                     |
-| Server Certificate          | Used to encrypt the license payload            | [Portal]Encrypt the License Payload | [Vault]pki_int/${serialNumber}                                               |
-| Server Private Key          | Used to decrypt the license payload            | [Engine]Decrypt the License Payload | [Vault]kv_v1/${serialNumber} <br> [SSM]/app-workflow-v5/license/ServerEncKey |
+| Key/Certificate Type        | Purpose                                                               | Used By                                             | Store Path                                                                              | Naming Convention                |
+|-----------------------------|-----------------------------------------------------------------------|-----------------------------------------------------|-----------------------------------------------------------------------------------------|----------------------------------|
+| CA Certificate              | Used establish trust                                                  | [Engine]Validate the Cert chain                     | [Vault]pki/rootCA${YYYYMMDD} <br> [SSM]/app-workflow-v5/license/CACert                  | rootCA${YYYYMMDD}                |
+| CA Private Key              | Used to sign certificates                                             | [Vault]Sign the intermediate CSR                    | [Vault]pki/rootCA${YYYYMMDD}                                                            |                                  |
+| Intermediate CA Certificate | Used to establish trust for intermediate CAs                          | [Engine]Validate the Cert chain                     | [Vault]pki_int/intermediateCA${YYYYMMDD}                                                | intermediateCA${YYYYMMDD}        |
+| Intermediate CA Private Key | Used to sign certificates for intermediate CAs                        | [Vault]Sign the Server CSR                          | [Vault]pki_int/intermediateCA${YYYYMMDD}                                                |                                  |
+| Server Certificate          | Used to encrypt the license payload                                   | [Portal]Encrypt the License Payload                 | [Vault]pki_int/${serialNumber}                                                          | app-workflow-v5.V5.${YYYYMMDD}   |
+| Server Private Key          | Used to decrypt the license payload                                   | [Engine]Decrypt the License Payload                 | [Vault]kv_v1/${serialNumber} <br> [SSM]/app-workflow-v5/license/ServerEncKey            |                                  |
+| Portal Certificate          | Used by the App Server to verify the signature of the license payload | [Engine]Verify the signature of the license payload | [Vault]pki_int/${serialNumber} <br> [SSM]/portal-license-v1/license/PortalPublicCert{N} | portal-license-v1.V1.${YYYYMMDD} |
+| Portal Private Key          | Use by the Portal to sign the license payload                         | [Portal]Sign the license payload                    | [Vault]kv_v1/${serialNumber}                                                            |                                  |
 
 The Public and Private key uses the EC algorithm with a key size of 256 bits. The certificates are signed using the
 SHA-256 hashing algorithm.
@@ -39,13 +41,17 @@ The Server Certificate has a 3-year validity period.
 Even after a Server Certificate expires and a new one is generated in Vault, the system maintains continuity through a
 hybrid process:
 
-- The Portal: Continues using the expired certificate to encrypt payloads but applies the new private key for digital
-  signatures. It also attaches the new certificate chain to the payload.
-- The RTE Engine: Uses the new chain to validate the signature while relying on its embedded private key to decrypt the
-  payload.
+- The Portal: Continues using the expired certificate to encrypt payloads.
 
 The Bottom Line: Because the underlying private key does not expire, decryption remains functional during the
 certificate transition.
+
+### Portal Certificate Expiration
+
+When the Portal Certificate expires, a new one is generated and stored in Vault. The new certificate is attached to the
+license payload so that the Engine can use it to verify the signature of the license payload. The Portal will use the
+new corresponding private key to sign the license payload, ensuring that the signature verification process remains
+intact.
 
 ### Intermediate CA Certificate Expiration
 
