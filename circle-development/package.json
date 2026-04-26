@@ -1,0 +1,24 @@
+{
+  "name": "circle-development",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.8.1",
+  "dependencies": {
+    "@circle-fin/developer-controlled-wallets": "^10.3.0",
+    "crypto": "^1.0.1",
+    "node-forge": "^1.4.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^25.6.0"
+  }
+}
