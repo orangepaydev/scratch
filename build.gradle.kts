@@ -27,6 +27,8 @@ dependencies {
     implementation("orangepay.core:lib-bpmn-v3:1.1.13") { isTransitive = false }
     // Source: https://mvnrepository.com/artifact/com.bettercloud/vault-java-driver
     implementation("com.bettercloud:vault-java-driver:5.1.0")
+    // Source: https://mvnrepository.com/artifact/software.amazon.awssdk/ssm
+    implementation("software.amazon.awssdk:ssm:2.42.41")
 }
 
 tasks.test {

@@ -24,6 +24,16 @@ import javax.crypto.spec.PSource
 
 class InitVault(val vault: Vault) {
 
+    fun fetchIssuerCer(pkiPath: String, dnName: String): Map<String, String>? {
+        val issuerResponse = vault.logical()
+            .read("$pkiPath/issuer/$dnName")
+
+        if (!issuerResponse.data.contains("issuer_id")) {
+            return null
+        }
+        return issuerResponse.data
+    }
+
     fun fetchIssuerId(pkiPath: String, dnName: String): String? {
         val issuerResponse = vault.logical()
             .read("$pkiPath/issuer/$dnName")
@@ -40,7 +50,7 @@ class InitVault(val vault: Vault) {
     }
 
     // create the CA certificate and print the certificate content
-    fun createCA(caName: String) {
+    fun createCA(caName: String): String? {
         val pkiPath = "pki" // Adjust if your PKI engine is mounted at a different path
         val caConfig = mapOf(
             "common_name" to "My Corporate Root CA",
@@ -62,8 +72,10 @@ class InitVault(val vault: Vault) {
             println("Successfully fetched certificate for: $caName")
             println("--- BEGIN CERTIFICATE ---")
             println(certificate)
+            return certificate
         } else {
             println("Certificate data not found for issuer: $caName")
+            return null
         }
         println("CA Created successfully.")
     }
@@ -258,24 +270,91 @@ class InitVault(val vault: Vault) {
         )
         val certChainingResponse = vault.logical().write("transit/keys/$keyName/config", certPayload)
         println("Response ${certChainingResponse.restResponse.body.toString(Charsets.UTF_8)}")
+    }
 
+    fun getIssuer(pkiPath: String, issuerName: String): String? {
+        try {
+            // Construct the path: e.g., "pki/issuer/my-intermediate-ca"
+            val path = "$pkiPath/issuer/$issuerName"
+
+            val response = vault.logical().read(path)
+
+            if (response.restResponse.status == 200) {
+                val data = response.data
+
+                println("--- Issuer Info: $issuerName ---")
+                println("Issuer ID: ${data["issuer_id"]}")
+                println("Common Name: ${data["common_name"]}")
+                println("Usage: ${data["usage"]}")
+
+                return data["certificate"] as String
+            }
+        } catch (e: Exception) {
+            println("Could not find issuer '$issuerName': ${e.message}")
+        }
+        return null
+    }
+
+    fun getCertificate(pkiPath: String, targetName: String): Triple<X509Certificate, String, String>? {
+        val cf = CertificateFactory.getInstance("X.509")
+        vault.logical().list("${pkiPath}/certs")?.apply {
+            listData.forEach { serial ->
+                val certData = vault.logical().read("pki_int/cert/$serial")
+                val certPem = certData.data["certificate"] as? String
+                if (certPem != null) {
+                    val x509 = cf.generateCertificate(
+                        ByteArrayInputStream(certPem.toByteArray(Charsets.UTF_8))
+                    ) as X509Certificate
+
+                    val cn = x509.subjectX500Principal.name
+                        .split(",")
+                        .firstOrNull { it.trimStart().startsWith("CN=") }
+                        ?.substringAfter("CN=")
+                        ?: "(unknown)"
+
+                    if (cn == targetName) {
+
+                        val retrieveSecretResponse = vault.logical().read("kv-v1/$serial")
+                        println(retrieveSecretResponse.restResponse.body.toString(Charsets.UTF_8))
+                        println(retrieveSecretResponse.data["private_key"])
+                        println(retrieveSecretResponse.data["certificate"])
+
+                        return Triple(x509, retrieveSecretResponse.data["certificate"]!!, retrieveSecretResponse.data["private_key"]!!)
+                    }
+                }
+            }
+        }
+        return null
     }
 }
 
 fun main() {
-    InitVault(createVaultClient()).apply {
-        // crate the root CA
-        // will need to be generated once every 8 years, though the rootCA validity is 10 years
-        // createCA("rootCA20260426")
-        // println(fetchIssuerId("pki", "rootCA20260426"))
+    SsmService().also { ssm->
+        InitVault(createVaultClient()).apply {
+            // crate the root CA
+            // will need to be generated once every 8 years, though the rootCA validity is 10 years
+            // val caCertificate = createCA("rootCA20260426")
+            // ssm.updateParameterRotate("/app-workflow-v5/license/CACert", caCertificate!!)
 
-        // create the intermediate CA signed by the root CA
-        // will need to be generated once every 3 years, though the intermediateCA validity is 5 years
-        // createCAInner("pki", "rootCA20260426", "intermediateCA20260426")
-        // println(fetchIssuerId("pki_int", "intermediateCA20260426"))
+            // println(fetchIssuerId("pki", "rootCA20260426"))
 
-        // these are the application certificates that will be used by the app, they will need to be generated every once every year, though the app cert validity is 2 years
-        // issueAppCert("pki_int", "intermediateCA20260426", "server-role", "app-workflow-v5.V5.20260427")
-        // issueAppCert("pki_int", "intermediateCA20260426", "server-role", "portal-license-v1.V1.20260427")
+            // create the intermediate CA signed by the root CA
+            // will need to be generated once every 3 years, though the intermediateCA validity is 5 years
+            // createCAInner("pki", "rootCA20260426", "intermediateCA20260426")
+            val intCACer = getIssuer("pki_int", "intermediateCA20260426")!!
+
+            // println(fetchIssuerId("pki_int", "intermediateCA20260426"))
+
+            // these are the application certificates that will be used by the app, they will need to be generated every once every year, though the app cert validity is 2 years
+            // issueAppCert("pki_int", "intermediateCA20260426", "server-role", "app-workflow-v5.V5.20260428")
+//            val (_, certPEMServer, keyPEMServer) = getCertificate("pki_int", "app-workflow-v5.V5.20260428")!!
+//            ssm.updateParameter("/portal-license-v1/license/ServerPublicCert", certPEMServer)
+//            ssm.updateParameterRotate("/app-workflow-v5/license/ServerEncKey", keyPEMServer)
+
+            // issueAppCert("pki_int", "intermediateCA20260426", "server-role", "portal-license-v1.V1.20260428")
+//            val (_, certPEMPortal, keyPEMPortal) = getCertificate("pki_int", "portal-license-v1.V1.20260428")!!
+//            ssm.updateParameter("/portal-license-v1/license/PortalPublicCert", certPEMPortal + "\n" + intCACer)
+//            ssm.updateParameter("/portal-license-v1/license/PortalEncKey", keyPEMPortal)
+        }
     }
 }
