@@ -50,3 +50,4 @@ license_pki/private/
 node_modules/
 
 .env
+circle-development/.env
