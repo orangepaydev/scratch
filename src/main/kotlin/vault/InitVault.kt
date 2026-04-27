@@ -347,8 +347,8 @@ fun main() {
 
             // these are the application certificates that will be used by the app, they will need to be generated every once every year, though the app cert validity is 2 years
             // issueAppCert("pki_int", "intermediateCA20260426", "server-role", "app-workflow-v5.V5.20260428")
-//            val (_, certPEMServer, keyPEMServer) = getCertificate("pki_int", "app-workflow-v5.V5.20260428")!!
-//            ssm.updateParameter("/portal-license-v1/license/ServerPublicCert", certPEMServer)
+            val (_, certPEMServer, keyPEMServer) = getCertificate("pki_int", "app-workflow-v5.V5.20260428")!!
+            ssm.updateParameter("/portal-license-v1/license/ServerPublicCertV5", certPEMServer)
 //            ssm.updateParameterRotate("/app-workflow-v5/license/ServerEncKey", keyPEMServer)
 
             // issueAppCert("pki_int", "intermediateCA20260426", "server-role", "portal-license-v1.V1.20260428")
